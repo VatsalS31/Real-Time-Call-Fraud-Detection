@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Fraud Detection</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    #transcription {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      min-height: 50px;
+      font-size: 18px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    #prediction {
+      margin-top: 20px;
+      padding: 10px;
+      font-size: 18px;
+      background-color: #e0f7fa;
+      border: 1px solid #4CAF50;
+      color: #004d40;
+    }
+    #startBtn, #stopBtn {
+      display: inline-block;
+      margin: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    #startBtn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+    }
+    #stopBtn {
+      background-color: #f44336;
+      color: white;
+      border: none;
+    }
+    #startBtn:hover {
+      background-color: #45a049;
+    }
+    #stopBtn:hover {
+      background-color: #e53935;
+    }
+    #startBtn:disabled, #stopBtn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>Live Fraud Detection</h1>
+  <button id="startBtn">Start Prediction</button>
+  <button id="stopBtn" disabled>Stop Prediction</button>
+  <div id="transcription"></div>
+  <div id="prediction">Prediction: <span id="predictionResult">N/A</span></div>
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const transcriptionDiv = document.getElementById('transcription');
+    const predictionResult = document.getElementById('predictionResult');
+    let recognition;
+
+    // Check for browser support of SpeechRecognition API
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      recognition = 'webkitSpeechRecognition' in window 
+        ? new webkitSpeechRecognition() 
+        : new SpeechRecognition(); // For other browsers
+      
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US'; // English transcription
+
+      recognition.onstart = function() {
+        startBtn.textContent = 'Listening...';
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      };
+
+      recognition.onresult = function(event) {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          transcript += result[0].transcript;
+          if (result.isFinal) {
+            transcript += '\n';
+          }
+        }
+        transcriptionDiv.textContent = transcript;
+
+        // Send the transcription to the backend for prediction
+        fetch('/predict', { // Assuming you are using the Flask route /predict
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text: transcript })
+        })
+          .then(response => response.json())
+          .then(data => {
+            predictionResult.textContent = data.prediction;
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+      };
+
+      recognition.onend = function() {
+        startBtn.textContent = 'Start Prediction';
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      };
+
+      recognition.onerror = function(event) {
+        transcriptionDiv.textContent = "Error: " + event.error;
+      };
+
+      startBtn.addEventListener('click', function() {
+        recognition.start();
+      });
+
+      stopBtn.addEventListener('click', function() {
+        recognition.stop();
+      });
+
+    } else {
+      transcriptionDiv.textContent = "Sorry, your browser does not support speech recognition.";
+      startBtn.disabled = true;
+      stopBtn.disabled = true;
+    }
+  </script>
+</body>
+</html>
