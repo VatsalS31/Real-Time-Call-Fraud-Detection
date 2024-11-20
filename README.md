@@ -84,11 +84,6 @@ Include screenshots or a GIF showing the application's interface and functionali
 <img width="1331" alt="image" src="https://github.com/user-attachments/assets/53ee48be-904f-49f2-a76c-e9480ddf0e44">
 <img width="1334" alt="image" src="https://github.com/user-attachments/assets/b5877c70-6288-4ac8-b0b5-44c7f3ce363d">
 
-
-## Contributing
-
-Feel free to fork this repository and submit pull requests for improvements or new features.
-
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
